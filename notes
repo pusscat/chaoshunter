@@ -1,0 +1,42 @@
+spr_tileset001 is the level tileset. Each "tile" is 32 by 32 pixels, and there are 9 tiles. They are numbered 1-9, read left to right and then top to bottom.  Tile "1" (the building) is the only one that game objects shouldn't be able to walk on or pass, every other tile is walkable on! I am going to reply to this email with an example game level layout code.
+
+spr_herowalking is the left and right walking animations for the player character. The tiles on this one are 16x16. Top sprites are at rest, and bottom sprites are a stepping, it should just alternate back and forth when the player moves.
+
+spr_viruswalking is the same as herowalking, but it is the various enemies that the player has to shoot. I will reply to this email with an example enemy/player layout.
+
+level code:
+
+1111111111
+1111111111
+4444444461
+1111111121
+1744611121
+1211961121
+1211194481
+1211111111
+1944444444
+1111111111
+
+enemy/player layout:
+
+1111111111
+1111111111
+P44444EEE1
+1111111121
+174E611121
+1E119611E1
+12111E4481
+1211111111
+19EEEE4444
+1111111111
+
+Anyways, I am thinking if there is a way for the monsters to just kind of move back and forth until the player comes around a building,
+
+
+at the start of the level, this order of things happens:
+
+1. start with a black or grey screen
+2. player walks in from left to starting position
+3. the tiles all kind of fly in from different directions and land in place
+4. the enemies spawn
+5. game start.
