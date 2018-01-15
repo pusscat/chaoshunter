@@ -31,12 +31,40 @@ def load_tile_table(filename, width, height):
             tile_table.append(image.subsurface(rect))
     return tile_table
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, position, velocity):
+
+        # Call the parent's constructor
+        pygame.sprite.Sprite.__init__(self)
+
+        # Set height, width
+        self.image = pygame.Surface([4,4])
+
+        # Make our top-left corner the pass
+        global TILESIZE
+        self.rect = self.image.get_rect()
+        self.rect.x = position[0]*TILESIZE
+        self.rect.y = position[1]*TILESIZE
+
+        self.v_x = velocity[0]
+        self.v_y = velocity[1]
+
+    def fly(self):
+        self.rect.x += self.v_x
+        self.rect.y += self.v_y
+
+        global screen
+        pygame.gfxdraw.pixel(sceen, WHITE, self.rect.x, self.rect.y)
+
 class Level():
     def __init__(self, lvlCode, player, enemies):
         self.lvlCode = lvlCode
         self.player = player
         self.enemies = enemies
-        self.walls = []
+	# wall off the screen
+        self.walls = [Wall(0,0,320,1), Wall(0,0,1,320), Wall(0,320,320,1), Wall(320,320,1,320)]
+        self.firstDraw = True
+
 
     def DrawBG(self):
         global bgTiles
@@ -48,7 +76,7 @@ class Level():
         x = 0
         y = 0
         
-        image = pygame.Surface((10*TILESIZE, 10*TILESIZE))
+        #image = pygame.Surface([10*TILESIZE, 10*TILESIZE])
 
         for char in self.lvlCode:
             tile = int(char)
@@ -56,8 +84,13 @@ class Level():
                 y += 1
                 x = 0
             else:
+                if self.firstDraw:
+                    if tile == 1:
+                        self.walls.append(Wall(x*TILESIZE, y*TILESIZE, \
+                                TILESIZE-1, TILESIZE-1))
                 screen.blit(bgTiles[tile-1], (x*TILESIZE, y*TILESIZE))
                 x += 1
+        self.firstDraw = False
 
 class Orientation(Enum):
     North = 0
@@ -66,7 +99,7 @@ class Orientation(Enum):
     West = 3
 
 class Wall(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, color):
+    def __init__(self, x, y, width, height):
         """ Constructor function """
 
         # Call the parent's constructor
@@ -164,7 +197,7 @@ class Player(pygame.sprite.Sprite):
         block_hit_list = block_hit_list + enemy_hit_list
 
         self.life = self.life-len(enemy_hit_list)
-        print "life: %d" % self.life
+        #print "life: %d" % self.life
         if self.life < 0:
             self.image.fill(BLACK)
 
@@ -242,6 +275,8 @@ def RunLevel(level, levels):
         enemies.append(enemy)
         movingsprites.add(enemy)
 
+    bullets = []
+
     done = False
 
     while not done:
@@ -253,29 +288,29 @@ def RunLevel(level, levels):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     player.SetOrient(Orientation.West)
-                    player.changespeed(-5, 0)
+                    player.changespeed(-2.5, 0)
                 if event.key == pygame.K_RIGHT:
                     player.SetOrient(Orientation.East)
-                    player.changespeed(5, 0)
+                    player.changespeed(2.5, 0)
                 if event.key == pygame.K_UP:
                     #player.SetOrient(Orientation.North)
-                    player.changespeed(0, -5)
+                    player.changespeed(0, -2.5)
                 if event.key == pygame.K_DOWN:
                     #player.SetOrient(Orientation.South)
-                    player.changespeed(0, 5)
+                    player.changespeed(0, 2.5)
                 if event.key == pygame.K_a:
                     player.attack()
 
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
-                    player.changespeed(5, 0)
+                    player.changespeed(2.5, 0)
                 if event.key == pygame.K_RIGHT:
-                    player.changespeed(-5, 0)
+                    player.changespeed(-2.5, 0)
                 if event.key == pygame.K_UP:
-                    player.changespeed(0, 5)
+                    player.changespeed(0, 2.5)
                 if event.key == pygame.K_DOWN:
-                    player.changespeed(0, -5)
+                    player.changespeed(0, -2.5)
 
             
         player.move(levels[level], enemies)
@@ -288,6 +323,8 @@ def RunLevel(level, levels):
         DrawMob(player, heroTiles)
         for enemy in enemies:
             DrawMob(enemy, enemyTiles)
+        for bullet in bullets:
+            bullet.fly()
 
 
         pygame.display.flip()
