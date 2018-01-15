@@ -136,8 +136,8 @@ class Enemy(pygame.sprite.Sprite):
         global TILESIZE
         self.rect = self.image.get_rect()
         print position
-        self.rect.x = position[0]*TILESIZE
-        self.rect.y = position[1]*TILESIZE
+        self.rect.x = (position[0]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
+        self.rect.y = (position[1]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
         self.last = Orientation.East
         self.change_x = 0
         self.change_y = 0
@@ -173,8 +173,8 @@ class Player(pygame.sprite.Sprite):
         # Make our top-left corner the passed-in location.
         global TILESIZE
         self.rect = self.image.get_rect()
-        self.rect.x = position[0]*TILESIZE
-        self.rect.y = position[1]*TILESIZE
+        self.rect.x = (position[0]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
+        self.rect.y = (position[1]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
         self.orient = Orientation.East
         self.last = Orientation.East
         self.change_x = 0
