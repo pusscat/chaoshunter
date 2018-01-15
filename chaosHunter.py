@@ -48,14 +48,18 @@ class Bullet(pygame.sprite.Sprite):
         self.v_x = velocity[0]
         self.v_y = velocity[1]
 
-    def fly(self, level):
+    def fly(self, level, enemies):
         self.rect.x += self.v_x
         self.rect.y += self.v_y
 
         block_hit_list = pygame.sprite.spritecollide(self, level.walls, \
                         False)
+        enemy_hit_list = pygame.sprite.spritecollide(self, enemies, False)
+        if len(enemy_hit_list) > 0:
+            for enemy in enemy_hit_list:
+                enemy.hit()
 
-        if len(block_hit_list) == 0:
+        if len(block_hit_list) == 0 and len(enemy_hit_list) == 0:
             global screen
             screen.fill(WHITE, self.rect)
             return False
@@ -131,6 +135,7 @@ class Enemy(pygame.sprite.Sprite):
 
         global TILESIZE
         self.rect = self.image.get_rect()
+        print position
         self.rect.x = position[0]*TILESIZE
         self.rect.y = position[1]*TILESIZE
         self.last = Orientation.East
@@ -143,10 +148,8 @@ class Enemy(pygame.sprite.Sprite):
         pass
 
     def hit(self):
-        print "hit!"
-        self.life = self.life - 1
-        if self.life == 0:
-            self.image = pygame.Surface([0, 0])
+        self.life -= 1
+        if self.life <= 0:
             self.rect.x = 0
             self.rect.y = 0
 
@@ -260,6 +263,9 @@ def DrawMob(mob, tileSet):
     WLEFT   = 2
     WRIGHT  = 3
 
+    if mob.life == 0:
+        return
+
     tileNum = 0
     # standing animation
     if mob.last == Orientation.East:
@@ -341,13 +347,20 @@ def RunLevel(level, levels):
         global heroTiles
         global enemyTiles
         levels[level].DrawBG()
-        for enemy in enemies:
-            DrawMob(enemy, enemyTiles)
         for bullet in bullets:
-            if bullet.fly(levels[level]):
+            if bullet.fly(levels[level], enemies):
                 bullets.remove(bullet)
+        for enemy in enemies:
+            if enemy.life == 0:
+                enemies.remove(enemy)
+            else:
+                DrawMob(enemy, enemyTiles)
 
         DrawMob(player, heroTiles)
+
+        if len(enemies) == 0:
+            # go to next level
+            return
 
         pygame.display.flip()
         pygame.display.update()
