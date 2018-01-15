@@ -41,20 +41,27 @@ class Bullet(pygame.sprite.Sprite):
         self.image = pygame.Surface([4,4])
 
         # Make our top-left corner the pass
-        global TILESIZE
         self.rect = self.image.get_rect()
-        self.rect.x = position[0]*TILESIZE
-        self.rect.y = position[1]*TILESIZE
+        self.rect.x = position[0]*2
+        self.rect.y = position[1]*2
 
         self.v_x = velocity[0]
         self.v_y = velocity[1]
 
-    def fly(self):
+    def fly(self, level):
         self.rect.x += self.v_x
         self.rect.y += self.v_y
 
-        global screen
-        pygame.gfxdraw.pixel(sceen, WHITE, self.rect.x, self.rect.y)
+        block_hit_list = pygame.sprite.spritecollide(self, level.walls, \
+                        False)
+
+        if len(block_hit_list) == 0:
+            global screen
+            screen.fill(WHITE, self.rect)
+            return False
+        else:
+            return True
+
 
 class Level():
     def __init__(self, lvlCode, player, enemies):
@@ -126,7 +133,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = position[0]*TILESIZE
         self.rect.y = position[1]*TILESIZE
-        self.orient = Orientation.East
+        self.last = Orientation.East
         self.change_x = 0
         self.change_y = 0
 
@@ -166,6 +173,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = position[0]*TILESIZE
         self.rect.y = position[1]*TILESIZE
         self.orient = Orientation.East
+        self.last = Orientation.East
         self.change_x = 0
         self.change_y = 0
 
@@ -174,7 +182,17 @@ class Player(pygame.sprite.Sprite):
 
     def attack(self):
         # shoot a bullet in the direction you are facing
-        pass
+        v_x = v_y = 0
+        if self.orient == Orientation.East:
+            v_x = 5
+        if self.orient == Orientation.West:
+            v_x = -5
+        if self.orient == Orientation.North:
+            v_y = -5
+        if self.orient == Orientation.South:
+            v_y = 5
+        bullet = Bullet((self.rect.x, self.rect.y), (v_x, v_y))
+        return bullet
 
     def changespeed(self, x, y):
         """ Change the speed of the player. Called with a keypress. """
@@ -244,7 +262,7 @@ def DrawMob(mob, tileSet):
 
     tileNum = 0
     # standing animation
-    if mob.orient == Orientation.East:
+    if mob.last == Orientation.East:
         tileNum = SRIGHT
     else:
         tileNum = SLEFT
@@ -252,7 +270,7 @@ def DrawMob(mob, tileSet):
     if pygame.time.get_ticks() % 2 != 0:
         if mob.change_x != 0 or mob.change_y != 0:
             # walking animation
-            if mob.orient == Orientation.East:
+            if mob.last == Orientation.East:
                 tileNum = WRIGHT
             else:
                 tileNum = WLEFT
@@ -288,18 +306,21 @@ def RunLevel(level, levels):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     player.SetOrient(Orientation.West)
+                    player.last = Orientation.West
                     player.changespeed(-2.5, 0)
                 if event.key == pygame.K_RIGHT:
                     player.SetOrient(Orientation.East)
+                    player.last = Orientation.East
                     player.changespeed(2.5, 0)
                 if event.key == pygame.K_UP:
-                    #player.SetOrient(Orientation.North)
+                    player.SetOrient(Orientation.North)
                     player.changespeed(0, -2.5)
                 if event.key == pygame.K_DOWN:
-                    #player.SetOrient(Orientation.South)
+                    player.SetOrient(Orientation.South)
                     player.changespeed(0, 2.5)
                 if event.key == pygame.K_a:
-                    player.attack()
+                    if len(bullets) < 3:
+                        bullets.append(player.attack())
 
 
             if event.type == pygame.KEYUP:
@@ -320,12 +341,13 @@ def RunLevel(level, levels):
         global heroTiles
         global enemyTiles
         levels[level].DrawBG()
-        DrawMob(player, heroTiles)
         for enemy in enemies:
             DrawMob(enemy, enemyTiles)
         for bullet in bullets:
-            bullet.fly()
+            if bullet.fly(levels[level]):
+                bullets.remove(bullet)
 
+        DrawMob(player, heroTiles)
 
         pygame.display.flip()
         pygame.display.update()
