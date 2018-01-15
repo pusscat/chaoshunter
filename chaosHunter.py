@@ -135,7 +135,6 @@ class Enemy(pygame.sprite.Sprite):
 
         global TILESIZE
         self.rect = self.image.get_rect()
-        print position
         self.rect.x = (position[0]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
         self.rect.y = (position[1]*TILESIZE) + (TILESIZE/2) - (MOBSIZE/2)
         self.last = Orientation.East
@@ -253,9 +252,37 @@ def LoadLevels():
 
     return levels
 
-def DrawLevel(level, levels):
+def DrawLevel(level):
     # snazzy tile flying opening here
-    pass
+    global heroTiles
+    global enemyTiles
+    global bgTiles
+    global screen
+
+    # draw the player first and wait a second
+    screen.blit(heroTiles[1], (level.player[0]*TILESIZE+8, level.player[1]*TILESIZE+8))
+    pygame.display.flip()
+    pygame.display.update() 
+    time.sleep(2)
+
+    # for each bg tile, make it fly in
+
+    y = x = 0
+    for char in level.lvlCode:
+        tile = int(char)
+        if tile == 0:
+            y += 1
+            x = 0
+        else:
+            for c_y in range(320, y*TILESIZE, -1):
+                screen.blit(heroTiles[1], (level.player[0]*TILESIZE+8, \
+                            level.player[1]*TILESIZE+8))
+                screen.blit(bgTiles[tile-1], (x*TILESIZE, c_y))
+                pygame.display.flip()
+                pygame.display.update()
+            x += 1
+
+
 
 def DrawMob(mob, tileSet):
     SLEFT   = 0
@@ -286,15 +313,15 @@ def DrawMob(mob, tileSet):
     global screen
     screen.blit(tile, (mob.rect.x, mob.rect.y))
     
-def RunLevel(level, levels):
-    clock = pygame.time.Clock()
+def RunLevel(level):
+    global clock
     
-    player = Player(levels[level].player)
+    player = Player(level.player)
     movingsprites = pygame.sprite.Group()
     movingsprites.add(player)
 
     enemies = []
-    for enemySpot in levels[level].enemies:
+    for enemySpot in level.enemies:
         enemy = Enemy(enemySpot)
         enemies.append(enemy)
         movingsprites.add(enemy)
@@ -340,15 +367,15 @@ def RunLevel(level, levels):
                     player.changespeed(0, -2.5)
 
             
-        player.move(levels[level], enemies)
+        player.move(level, enemies)
         for enemy in enemies:
-            enemy.move(levels[level], player)
+            enemy.move(level, player)
         
         global heroTiles
         global enemyTiles
-        levels[level].DrawBG()
+        level.DrawBG()
         for bullet in bullets:
-            if bullet.fly(levels[level], enemies):
+            if bullet.fly(level, enemies):
                 bullets.remove(bullet)
         for enemy in enemies:
             if enemy.life == 0:
@@ -396,13 +423,15 @@ def main():
     global level
     global lives
     global score
+    global clock
 
     level = 0
     lives = 3
     score = 0
     while level < len(levels):
-        DrawLevel(level, levels)
-        RunLevel(level,levels)
+        clock = pygame.time.Clock()
+        DrawLevel(levels[level])
+        RunLevel(levels[level])
         if lives > 0:
             level += 1
         else:
