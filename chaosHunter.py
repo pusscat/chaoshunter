@@ -42,8 +42,8 @@ class Bullet(pygame.sprite.Sprite):
 
         # Make our top-left corner the pass
         self.rect = self.image.get_rect()
-        self.rect.x = position[0]*2
-        self.rect.y = position[1]*2
+        self.rect.x = position[0]
+        self.rect.y = position[1]
 
         self.v_x = velocity[0]
         self.v_y = velocity[1]
@@ -191,7 +191,7 @@ class Player(pygame.sprite.Sprite):
             v_y = -5
         if self.orient == Orientation.South:
             v_y = 5
-        bullet = Bullet((self.rect.x, self.rect.y), (v_x, v_y))
+        bullet = Bullet((self.rect.x+(MOBSIZE/2), self.rect.y+(MOBSIZE/2)), (v_x, v_y))
         return bullet
 
     def changespeed(self, x, y):
